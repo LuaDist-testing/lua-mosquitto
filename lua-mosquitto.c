@@ -123,6 +123,21 @@ static int mosq_version(lua_State *L)
 	return 1;
 }
 
+static int mosq_topic_matches_sub(lua_State *L)
+{
+	const char *sub = luaL_checkstring(L, 1);
+	const char *topic = luaL_checkstring(L, 2);
+
+	bool result;
+	int rc = mosquitto_topic_matches_sub(sub, topic, &result);
+	if (rc != MOSQ_ERR_SUCCESS) {
+		return mosq__pstatus(L, rc);
+	} else {
+		lua_pushboolean(L, result);
+		return 1;
+	}
+}
+
 static int mosq_init(lua_State *L)
 {
 	if (!mosq_initialized)
@@ -273,6 +288,35 @@ static int ctx_tls_set(lua_State *L)
 	// the last param is a callback to a function that asks for a passphrase for a keyfile
 	// our keyfiles should NOT have a passphrase
 	int rc = mosquitto_tls_set(ctx->mosq, cafile, capath, certfile, keyfile, 0);
+	return mosq__pstatus(L, rc);
+}
+
+static int ctx_tls_insecure_set(lua_State *L)
+{
+	ctx_t *ctx = ctx_check(L, 1);
+	bool value = lua_toboolean(L, 2);
+
+	int rc = mosquitto_tls_insecure_set(ctx->mosq, value);
+	return mosq__pstatus(L, rc);
+}
+
+static int ctx_tls_psk_set(lua_State *L)
+{
+	ctx_t *ctx = ctx_check(L, 1);
+	const char *psk = luaL_checkstring(L, 2);
+	const char *identity = luaL_checkstring(L, 3);
+	const char *ciphers = luaL_optstring(L, 4, NULL);
+
+	int rc = mosquitto_tls_psk_set(ctx->mosq, psk, identity, ciphers);
+	return mosq__pstatus(L, rc);
+}
+
+static int ctx_threaded_set(lua_State *L)
+{
+	ctx_t *ctx = ctx_check(L, 1);
+	bool value = lua_toboolean(L, 2);
+
+	int rc = mosquitto_threaded_set(ctx->mosq, value);
 	return mosq__pstatus(L, rc);
 }
 
@@ -737,6 +781,7 @@ static const struct luaL_Reg R[] = {
 	{"cleanup",	mosq_cleanup},
 	{"__gc",	mosq_cleanup},
 	{"new",		mosq_new},
+	{"topic_matches_sub",mosq_topic_matches_sub},
 	{NULL,		NULL}
 };
 
@@ -747,7 +792,10 @@ static const struct luaL_Reg ctx_M[] = {
 	{"will_set",		ctx_will_set},
 	{"will_clear",		ctx_will_clear},
 	{"login_set",		ctx_login_set},
+	{"tls_insecure_set",	ctx_tls_insecure_set},
 	{"tls_set",		ctx_tls_set},
+	{"tls_psk_set",		ctx_tls_psk_set},
+	{"threaded_set",	ctx_threaded_set},
 	{"connect",			ctx_connect},
 	{"connect_async",	ctx_connect_async},
 	{"reconnect",		ctx_reconnect},

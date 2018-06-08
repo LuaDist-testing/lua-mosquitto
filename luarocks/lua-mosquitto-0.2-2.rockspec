@@ -1,17 +1,9 @@
--- This file was automatically generated for the LuaDist project.
-
 package = "lua-mosquitto"
 version = "0.2-2"
--- LuaDist source
 source = {
-  tag = "0.2-2",
-  url = "git://github.com/LuaDist-testing/lua-mosquitto.git"
+	url = "git://github.com/flukso/lua-mosquitto",
+	tag = "v0.2"
 }
--- Original source
--- source = {
--- 	url = "git://github.com/flukso/lua-mosquitto",
--- 	tag = "v0.2"
--- }
 description = {
 	summary = "Lua bindings to libmosquitto",
 	detailed = [[
@@ -44,3 +36,4 @@ build = {
 		}
 	}
 }
+
